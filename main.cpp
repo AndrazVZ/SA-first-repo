@@ -71,6 +71,39 @@ int main(int argc, const char* argv[]) {
 
     if (argv[1][0] == '0') {
         //counting sort
+
+        //poisci min
+        int min = findMin(A);
+
+        //vektor ki se zacne z 0
+        subtractMin(A,min);
+        int max = findMax(A);
+
+        //pomozni vektor
+        vector<int> C(max+1,0);
+
+        //KORAK 2:
+        for(int i = 0; i < A.size(); i++){
+            C[A[i]] = C[A[i]] + 1;
+        }
+        //KORAK 3: i > 0!
+        for(int i = 1; i < C.size(); i++){ //Pazi, mozna napaka: <=
+            C[i] = C[i] + C[i-1];
+        }
+        //KORAK 4: izhodno polje
+        vector<int> B(A.size());
+        for(int i = A.size()-1; i >= 0; i--){
+            B[C[A[i]]-1] = A[i];
+            //dekrementiraj C
+            C[A[i]] = C[A[i]]-1;
+        }
+
+        //KORAK 5: pretvori nazaj
+        addMin(B,min);
+
+        for(int i = 0; i < B.size(); i++){
+            A[i] = B[i];
+        }
     }
     else {
         //Roman sort
