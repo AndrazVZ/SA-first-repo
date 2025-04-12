@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ -f ../main.c ]; then
+if [ -f ../main.cpp ]; then
 	echo "main.c najden!"
 	exit 0
 else 
