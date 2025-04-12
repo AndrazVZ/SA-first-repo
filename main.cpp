@@ -136,7 +136,7 @@ int main(int argc, const char* argv[]) {
             }
         }
 
-        //KORAK 4: pretvori nazaj.
+        //KORAK 4: pretvori nazaj...
         addMin(B,min);
 
         for(int i = 0; i < B.size(); i++){
