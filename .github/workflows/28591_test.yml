@@ -1,36 +1,66 @@
-# This is a basic workflow to help you get started with Actions
+name: 28591_test
 
-name: CI
-
-# Controls when the workflow will run
+#Proženje akcije ob vsakem potisku na glavno vejo main
 on:
-  # Triggers the workflow on push or pull request events but only for the "main" branch
   push:
-    branches: [ "main" ]
-  pull_request:
-    branches: [ "main" ]
+    branches: [main]
 
-  # Allows you to run this workflow manually from the Actions tab
-  workflow_dispatch:
-
-# A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "build"
-  build:
-    # The type of runner that the job will run on
-    runs-on: Linux
-
-    # Steps represent a sequence of tasks that will be executed as part of the job
+  check-tests:
+    name: Check for test scripts
+    runs-on: ubuntu-latest
     steps:
-      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v4
+      - name: Checkout repository
+        uses: actions/checkout@v4  #Prenos vsebine repozitorija
 
-      # Runs a single command using the runners shell
-      - name: Run a one-line script
-        run: echo Hello, world!
-
-      # Runs a set of commands using the runners shell
-      - name: Run a multi-line script
+      - name: Verify test scripts exist
         run: |
-          echo Add other actions to build,
-          echo test, and deploy your project.
+          # Preverimo, če obstaja testna skripta
+          if [ ! -f ./tests/run_tests.sh ]; then
+            echo "Testna skripta ni najdena!" >&2  # Zapis napake v standardni izhod
+            exit 1  # Zaključimo z napako
+          fi
+
+      - name: Upload error log if exists
+        if: failure()  #Izvede se le, če je prejšnji korak SPODLETEL
+        run: echo "Testna skripta ni najdena!" > napaka.txt  #Zapišem napako v datoteko
+
+      - name: Upload napaka.txt
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: napaka
+          path: napaka.txt  #"Artefakt", ki ga bo naslednji posel lahko prenesel
+
+  run-tests:
+    name: Run tests
+    needs: check-tests  #Ta posel se izvede šele, ko je "check-tests" USPEŠNO končan
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]  #Matrika za izvajanje na več operacijskih sistemih
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4  #Prenos kode
+
+      - name: Download napaka.txt
+        uses: actions/download-artifact@v4
+        with:
+          name: napaka
+        continue-on-error: true  #Če "artefakt" ne obstaja (ni bilo napake), nadaljujem brez težav
+
+      - name: Check for errors
+        run: |
+          if [ -f napaka/napaka.txt ]; then 
+            echo "Napaka pri prejšnjem \"jobu\":"
+            cat napaka/napaka.txt
+            exit 1
+          fi
+
+      - name: Set execute permission for test script
+        if: runner.os == 'Linux'  #Pravice za izvajanje samo na Linuxu
+        run: chmod +x ./tests/run_tests.sh
+
+      - name: Run tests
+        run: ./tests/run_tests.sh  #Izvedem testno skripto
