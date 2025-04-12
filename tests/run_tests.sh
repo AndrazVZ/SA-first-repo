@@ -1,6 +1,6 @@
 #!/bin/bash
 
-if [ -f main.c ]; then
+if [ -f "$(dirname "$u")/../main.c" ]; then
 	echo "main.c najden!"
 	exit 0
 else 
