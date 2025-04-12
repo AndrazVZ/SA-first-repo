@@ -1,0 +1,29 @@
+name: 28591_deploy
+
+on: #Se izvede ko je test completed
+  workflow_run:
+    workflows: ["28591_test"]
+    types:
+      - completed
+
+jobs:
+  deploy:
+    name: Build and push Docker image
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Log in to DockerHub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: true
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/sa-first-repo:latest
